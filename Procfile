@@ -1,1 +1,1 @@
-web: ./pack-calculator
+web: bin/pack-calculator
