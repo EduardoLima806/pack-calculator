@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pack Calculator - Eduardo Lima</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .packs-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pack-badge {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #c33;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Pack Calculator - Eduardo Lima</h1>
+        <p class="subtitle">Calculate optimal pack combinations for your orders</p>
+
+        <form id="calculatorForm">
+            <div class="form-group">
+                <label for="quantity">Order Quantity</label>
+                <input type="number" id="quantity" name="quantity" min="0" required placeholder="Enter number of items">
+                <div class="help-text">Enter the number of items the customer ordered</div>
+            </div>
+
+            <div class="form-group">
+                <label for="packSizes">Pack Sizes (Optional)</label>
+                <input type="text" id="packSizes" name="packSizes" placeholder="250, 500, 1000, 2000, 5000">
+                <div class="help-text">Comma-separated list of pack sizes. Leave empty to use default sizes.</div>
+            </div>
+
+            <button type="submit" id="calculateBtn">Calculate Packs</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            Calculating...
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <h2>Result</h2>
+            <div class="result-item">
+                <strong>Order Quantity:</strong>
+                <span id="resultQuantity"></span>
+            </div>
+            <div class="result-item">
+                <strong>Pack Combination:</strong>
+                <div class="packs-list" id="packsList"></div>
+            </div>
+            <div class="result-item">
+                <strong>Total Items:</strong>
+                <span id="totalItems"></span>
+            </div>
+            <div class="result-item">
+                <strong>Total Packs:</strong>
+                <span id="totalPacks"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('calculatorForm');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+        const loadingDiv = document.getElementById('loading');
+        const calculateBtn = document.getElementById('calculateBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide previous results
+            resultDiv.classList.remove('show');
+            errorDiv.classList.remove('show');
+            loadingDiv.classList.add('show');
+            calculateBtn.disabled = true;
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const packSizesInput = document.getElementById('packSizes').value.trim();
+
+            const requestBody = {
+                quantity: quantity
+            };
+
+            // Add pack sizes if provided
+            if (packSizesInput) {
+                const packSizes = packSizesInput.split(',')
+                    .map(s => parseInt(s.trim()))
+                    .filter(n => !isNaN(n) && n > 0);
+                if (packSizes.length > 0) {
+                    requestBody.pack_sizes = packSizes;
+                }
+            }
+
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'An error occurred');
+                }
+
+                // Display results
+                document.getElementById('resultQuantity').textContent = data.quantity;
+                document.getElementById('totalItems').textContent = data.total_items;
+                document.getElementById('totalPacks').textContent = data.total_packs;
+
+                // Display packs
+                const packsList = document.getElementById('packsList');
+                packsList.innerHTML = '';
+                
+                if (Object.keys(data.packs).length === 0) {
+                    packsList.innerHTML = '<span>No packs needed</span>';
+                } else {
+                    // Sort pack sizes in descending order for display
+                    const sortedPacks = Object.entries(data.packs)
+                        .map(([size, count]) => ({ size: parseInt(size), count }))
+                        .sort((a, b) => b.size - a.size);
+
+                    sortedPacks.forEach(({ size, count }) => {
+                        const badge = document.createElement('span');
+                        badge.className = 'pack-badge';
+                        badge.textContent = `${count} × ${size}`;
+                        packsList.appendChild(badge);
+                    });
+                }
+
+                resultDiv.classList.add('show');
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.add('show');
+            } finally {
+                loadingDiv.classList.remove('show');
+                calculateBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
