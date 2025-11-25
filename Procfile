@@ -1,1 +1,1 @@
-web: bin/pack-calculator
+web: bin/server
